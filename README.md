@@ -13,3 +13,10 @@ A simple python app to track covid-19 cases in India and worldwide. The app work
 * `python3 con_vid_stats.py --dashboard india` : To get India stats overview.
 * `python3 con_vid_stats.py --state bihar` : To get details for a particular state in India.
 
+## Screenshots
+
+![Alt](./screenshots/world_dash.png "World Dashboard")
+
+![Alt](./screenshots/india_dash.png "World Dashboard")
+
+![Alt](./screenshots/state.png "World Dashboard")
