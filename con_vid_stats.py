@@ -82,7 +82,7 @@ def dash_india(color, url):
         printBold(f"{active}", "yellow")
         
         print_yellow(f"Total Recovered:") 
-        printBold(f"{recovered}", "green")
+        printBold(f"{recovered}\n", "green")
         
         # print_yellow(f"Last updated:\t") 
         # printBold(f"{updated}\n", "white")
