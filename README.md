@@ -17,6 +17,6 @@ A simple python app to track covid-19 cases in India and worldwide. The app work
 
 ![Alt](./screenshots/world_dash.png "World Dashboard")
 
-![Alt](./screenshots/india_dash.png "World Dashboard")
+![Alt](./screenshots/india_dash.png "India Dashboard")
 
-![Alt](./screenshots/state.png "World Dashboard")
+![Alt](./screenshots/state.png "State Dashboard")

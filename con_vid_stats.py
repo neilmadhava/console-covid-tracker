@@ -12,71 +12,14 @@ def get_arguments(parser):
     options = parser.parse_args()
     return options
 
-
-def dashboard_india(color):
-    active = soup.find(
-        'div', class_='field-name-field-total-active-case').find(
-            'div', class_='field-item even').get_text()
-
-    cured = soup.find(
-        'div', class_='field-name-field-total-cured-discharged').find(
-            'div', class_='field-item even').get_text()
-
-    migrated = soup.find(
-        'div', class_='field-name-field-migrated-counts').find(
-            'div', class_='field-item even').get_text()
-
-    deaths = soup.find(
-        'div', class_='field-name-field-total-death-case').find(
-            'div', class_='field-item even').get_text()
-
-    updated = soup.find(
-        'div', class_='field-name-field-covid-india-as-on').find(
-            'div', class_='field-item even').get_text()
-    text = '''
-         -----------------
-        |    DASHBOARD    |
-         -----------------
-    '''
-    if(not color):
-        # printBold = lambda x, color: print(colored(x, color, attrs=['bold']))
-        print(text)
-        print(f"Total Confirmed: {int(active) + int(cured) + int(migrated) + int(deaths)}")
-        print(f"Total Deceased:\t {deaths}")
-        print(f"Total Active:\t {active}")
-        print(f"Total Recovered: {cured}")
-        print(f"Migrated:\t {migrated}")
-        print(f"Last updated:\t {updated}\n")
-    else:
-        print_yellow = lambda x: cprint(x, 'yellow', end=" ")
-        printBold = lambda x, color: print(colored(x, color, attrs=['bold']))
-        printBoldBlink = lambda x, color: print(colored(x, color, attrs=['bold', 'underline']))
-        printBold(text, "white")
-        print_yellow(f"Total Confirmed:") 
-        printBoldBlink(f"{int(active) + int(cured) + int(migrated) + int(deaths)}", "magenta")
-        
-        print_yellow(f"Total Deceased:\t") 
-        printBold(f"{deaths}", "red")
-        
-        print_yellow(f"Total Active:\t") 
-        printBold(f"{active}", "yellow")
-        
-        print_yellow(f"Total Recovered:") 
-        printBold(f"{cured}", "green")
-        
-        print_yellow(f"Migrated:\t") 
-        printBold(f"{migrated}", "cyan")
-        
-        print_yellow(f"Last updated:\t") 
-        printBold(f"{updated}\n", "white")
-
-
-def dashboard_world(color):
+def dash_world(color, url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
     stats = soup.find_all('div', class_='container--wrap')[1].find_all("p")
     text = '''
-         -----------------
-        |    DASHBOARD    |
-         -----------------
+         -----------------------
+        |    WORLD DASHBOARD    |
+         -----------------------
     '''
     if(not color):
         print(text)
@@ -92,13 +35,13 @@ def dashboard_world(color):
         printBold(text, "white")
 
         print_yellow(f"Total Confirmed:")
-        printBoldBlink(f"{stats[2].get_text().strip()}", "magenta")
+        printBoldBlink(f"{stats[2].get_text().strip()}", "red")
 
         print_yellow(f"Total Critical:\t")
         printBold(f"{stats[4].get_text().strip()}", "cyan")
 
         print_yellow(f"Total Deceased:\t")
-        printBold(f"{stats[6].get_text().strip()}", "red")
+        printBold(f"{stats[6].get_text().strip()}", "blue")
 
         print_yellow(f"Total Active:\t")
         printBold(f"{stats[8].get_text().strip()}", "yellow")
@@ -106,60 +49,146 @@ def dashboard_world(color):
         print_yellow(f"Total Recovered:")
         printBold(f"{stats[10].get_text().strip()}\n", "green")
 
+def dash_india(color, url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    total = soup.find(id="total_counter").get_text()
+    active = soup.find(id="activecases").find(class_="card-title").get_text()
+    recovered = soup.find(id="recoveredcases").find(class_="card-title").get_text().replace("\n", "").replace("\t", "").replace("[", " [")
+    deaths = soup.find(id="deaths").find(class_="card-title").get_text().replace("\n", "").replace("\t", "").replace("[", " [")
+    text = '''
+         -----------------------
+        |    INDIA DASHBOARD    |
+         -----------------------
+    '''
+    if (not color):
+        print(text)
+        print(f"\tTotal Confirmed: {total}")
+        print(f"\tTotal Deceased:\t {deaths}")
+        print(f"\tTotal Active:\t {active}")
+        print(f"\tTotal Recovered: {recovered}")
+    else:
+        print_yellow = lambda x: cprint(x, 'yellow', end=" ")
+        printBold = lambda x, color: print(colored(x, color, attrs=['bold']))
+        printBoldUnderline = lambda x, color: print(colored(x, color, attrs=['bold', 'underline']))
+        printBold(text, "white")
+        print_yellow(f"Total Confirmed:") 
+        printBoldUnderline(f"{total}", "red")
+        
+        print_yellow(f"Total Deceased:\t") 
+        printBold(f"{deaths}", "blue")
+        
+        print_yellow(f"Total Active:\t") 
+        printBold(f"{active}", "yellow")
+        
+        print_yellow(f"Total Recovered:") 
+        printBold(f"{recovered}", "green")
+        
+        # print_yellow(f"Last updated:\t") 
+        # printBold(f"{updated}\n", "white")
 
-def state_details(search_state, color):
-    table = soup.find('div', class_='field-name-field-covid-statewise-data').find_all('div', class_='content')
+def state_details(search_state, color, url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    table = soup.find(id="table_id").find_all("tr")[1:]
     states = []
     for row in table:
-        fields = row.find_all('div', class_='field-items')
         new_state = {}
-        new_state['state'] = fields[0].get_text()
-        new_state['total_confirmed'] = fields[1].get_text()
-        new_state['cured'] = fields[2].get_text()
-        new_state['deaths'] = fields[3].get_text()
-        states.append(new_state)
+        
+        # State Name
+        new_state['state'] = row.find_all("td")[0].get_text()
+        
+        # total cases
+        total = row.find_all("td")[1].get_text().strip().split("\n")
+        if len(total) > 1 :
+            inc = total[0]
+            curr = total[2]
+        else:
+            inc = 0
+            curr = total[0]
+        new_state['total'] = f"[+{inc}] {curr}"
+        
+        # active cases
+        new_state['active'] = row.find_all("td")[2].get_text()
+        
+        # recovered cases
+        recovered = row.find_all("td")[3].get_text().strip().split("\n")
+        if len(recovered) > 1 :
+            inc = recovered[0]
+            curr = recovered[2]
+        else:
+            inc = 0
+            curr = recovered[0]
+        new_state['recovered'] = f"[+{inc}] {curr}"
+        
+        # total deaths
+        deaths = row.find_all("td")[4].get_text().strip().split("\n")
+        if len(deaths) > 1 :
+            inc = deaths[0]
+            curr = deaths[2]
+        else:
+            inc = 0
+            curr = deaths[0]
+        new_state['deaths'] = f"[+{inc}] {curr}"
 
+        new_state['rec_perc'] = row.find_all("td")[5].get_text()
+        new_state['death_perc'] = row.find_all("td")[6].get_text()
+        new_state['case_perc'] = row.find_all("td")[7].get_text()
+        states.append(new_state)
+    
     for state in states:
         if (search_state.lower() in state['state'].lower()):
             if(color):
                 print_yellow = lambda x: cprint(x, 'yellow', end=" ")
                 printBold = lambda x, color: print(colored(x, color, attrs=['bold']))
-                printBoldBlink = lambda x, color: print(colored(x, color, attrs=['bold', 'underline']))
+                printBoldUnderline = lambda x, color: print(colored(x, color, attrs=['bold', 'underline']))
                 
-                print_yellow('\nState:\t')
-                printBoldBlink(state['state'], "yellow")
+                printBoldUnderline(f"\n\t{state['state']}\n", "white")
 
-                print_yellow('Total:\t')
-                printBold(state['total_confirmed'], "magenta")
-        
-                print_yellow('Cured:\t')
-                printBold(state['cured'], "green")
-        
-                print_yellow('Deaths:\t')
-                printBold(f"{state['deaths']}\n", "red")
+                print_yellow('Total cases:\t')
+                printBold(state['total'], "blue")
+
+                print_yellow('Total deaths:\t')
+                printBold(state['deaths'], "red")
+
+                print_yellow('Total active:\t')
+                printBold(state['active'], "yellow")
+
+                print_yellow('Total cured:\t')
+                printBold(state['recovered'], "green")
+
+                print_yellow('Cured percent:\t')
+                printBold(state['rec_perc'], "green")
+
+                print_yellow('Death percent:\t')
+                printBold(state['death_perc'], "red")
+
+                print_yellow('Case percent:\t')
+                printBold(state['case_perc'] + "\n", "blue")
             else:
-                print('\nState:\t' + state['state'])
-                print('Total:\t' + state['total_confirmed'])
-                print('Cured:\t' + state['cured'])
-                print('Deaths:\t' + state['deaths'] + "\n")
+                print(f"\nState:\t\t {state['state']}")
+                print(f"Total cases:\t {state['total']}")
+                print(f"Total active:\t {state['active']}")
+                print(f"Total deaths:\t {state['deaths']}")
+                print(f"Total cured:\t {state['recovered']}")
+                print(f"Cured percent:\t {state['rec_perc']}")
+                print(f"Death percent:\t {state['death_perc']}")
+                print(f"Case percent:\t {state['case_perc']}\n")
             break
 
 parser = argparse.ArgumentParser()
 args = get_arguments(parser)
 
 if (args.dashboard == "india"):
-    response = requests.get("https://www.mygov.in/corona-data/covid19-statewise-status")
-    soup = BeautifulSoup(response.text, "html.parser")
-    dashboard_india(args.colored)
+    url = "https://tcovid19.herokuapp.com/"
+    dash_india(args.colored, url)
 elif (args.dashboard == "world"):
-    response = requests.get("https://ncov2019.live/")
-    soup = BeautifulSoup(response.text, "html.parser")
-    dashboard_world(args.colored)
+    url = "https://ncov2019.live/"
+    dash_world(args.colored, url)
 
 if (args.state):
-    response = requests.get("https://www.mygov.in/corona-data/covid19-statewise-status")
-    soup = BeautifulSoup(response.text, "html.parser")
-    state_details(args.state, args.colored)
+    url = "https://tcovid19.herokuapp.com/"
+    state_details(args.state, args.colored, url)
 
 if(len(sys.argv)<2):
     parser.print_help()
